@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎯 VIP QUIZ</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js">
+    </script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+            background: linear-gradient(158deg, #0d0921 0%, #1a0940 52%, #0c1e3c 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        @keyframes ci {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes pop {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            45% {
+                transform: scale(1.03);
+            }
+        }
+        @keyframes bi {
+            from {
+                opacity: 0;
+                transform: scale(.7);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes imagePop {
+            0% {
+                transform: scale(0.5) rotate(-5deg);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.1) rotate(2deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        .ci {
+            animation: ci .45s cubic-bezier(.22, 1, .36, 1) both;
+        }
+        .pop {
+            animation: pop .55s ease;
+        }
+        .bi {
+            animation: bi .35s ease both;
+        }
+        .fade-in {
+            animation: fadeIn .4s ease both;
+        }
+        .image-pop {
+            animation: imagePop .8s cubic-bezier(.34, 1.56, .64, 1) both;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, .28) !important;
+        }
+        input:focus {
+            outline: none !important;
+            border-color: rgba(250, 204, 21, .55) !important;
+            box-shadow: 0 0 0 3px rgba(250, 204, 21, .12) !important;
+        }
+        button {
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+        }
+        button:not(:disabled):active {
+            opacity: .82;
+            transform: scale(.97);
+        }
+        button:disabled {
+            opacity: .38;
+            cursor: default;
+        }
+        .hint-image {
+            width: 80%;
+            max-height: 280px;
+            object-fit: contain;
+            border-radius: 16px;
+            border: 2px solid rgba(250, 204, 21, .15);
+            box-shadow: 0 0 40px rgba(250, 204, 21, .08);
+            background-color: rgba(0, 0, 0, .2);
+            transition: all .5s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        .hint-image:hover {
+            transform: scale(1.02);
+            border-color: rgba(250, 204, 21, .3);
+            box-shadow: 0 0 60px rgba(250, 204, 21, .15);
+        }
+        .hint-image.full {
+            width: 95%;
+            max-height: 500px;
+            object-fit: contain;
+            border-color: rgba(74, 222, 128, .6);
+            box-shadow: 0 0 80px rgba(74, 222, 128, .3);
+            animation: imagePop .8s cubic-bezier(.34, 1.56, .64, 1) both;
+        }
+        #root {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            padding: 14px 22px;
+            background: rgba(0, 0, 0, .38);
+            border-bottom: 1px solid rgba(250, 204, 21, .18);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+        .header-title {
+            font-size: 21px;
+            font-weight: 900;
+            color: #facc15;
+            letter-spacing: 2.5px;
+        }
+        .header-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, .38);
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            transition: background .4s;
+        }
+        .dot.active {
+            background: #facc15;
+            box-shadow: 0 0 8px rgba(250, 204, 21, .6);
+        }
+        .dot.done {
+            background: #4ade80;
+        }
+        .dot.empty {
+            background: rgba(255, 255, 255, .18);
+        }
+        .score-badge {
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(245, 158, 11, .3);
+        }
+        .container {
+            flex: 1;
+            max-width: 680px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 22px 16px 36px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .round-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .round-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, .42);
+            letter-spacing: 1.5px;
+        }
+        .pts-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(250, 204, 21, .1);
+            border: 1px solid rgba(250, 204, 21, .28);
+            padding: 4px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .pts-badge span {
+            color: #facc15;
+        }
+        .pts-badge strong {
+            color: #facc15;
+        }
+        .clue-card {
+            border-radius: 20px;
+            padding: 20px;
+            transition: border .5s, background .5s;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+        .clue-card.won {
+            background: linear-gradient(135deg, rgba(74, 222, 128, .13), rgba(16, 185, 129, .07));
+            border: 1px solid rgba(74, 222, 128, .45);
+        }
+        .clue-card.lost {
+            background: rgba(239, 68, 68, .09);
+            border: 1px solid rgba(239, 68, 68, .38);
+        }
+        .clue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .clue-header span {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .42);
+        }
+        .pips {
+            display: flex;
+            gap: 5px;
+        }
+        .pip {
+            width: 32px;
+            height: 4px;
+            border-radius: 3px;
+            transition: background .35s;
+        }
+        .pip.active {
+            background: #facc15;
+            box-shadow: 0 0 6px rgba(250, 204, 21, .4);
+        }
+        .pip.empty {
+            background: rgba(255, 255, 255, .12);
+        }
+        .clue-item {
+            display: flex;
+            gap: 11px;
+            padding: 12px 15px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .05);
+        }
+        .clue-item.new {
+            background: rgba(250, 204, 21, .07);
+            border: 1px solid rgba(250, 204, 21, .22);
+        }
+        .clue-item .num {
+            color: #facc15;
+            font-weight: 800;
+            font-size: 11px;
+            min-width: 22px;
+            padding-top: 3px;
+            letter-spacing: .5px;
+        }
+        .clue-item .text {
+            font-size: 14.5px;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, .62);
+        }
+        .clue-item.new .text {
+            color: #fff;
+        }
+        .image-container {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(250, 204, 21, .1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .image-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, .5);
+            font-weight: 600;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, .04);
+            padding: 4px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+        .image-label.won-label {
+            color: #4ade80;
+            border-color: rgba(74, 222, 128, .3);
+            background: rgba(74, 222, 128, .08);
+        }
+        .text-hint-container {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: rgba(250, 204, 21, .08);
+            border: 1px solid rgba(250, 204, 21, .2);
+            border-radius: 11px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, .75);
+        }
+        .text-hint-container strong {
+            color: #facc15;
+        }
+        .wrong-container {
+            padding: 11px 15px;
+            background: rgba(239, 68, 68, .07);
+            border-radius: 11px;
+            border: 1px solid rgba(239, 68, 68, .2);
+        }
+        .wrong-container .label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, .4);
+            margin-bottom: 8px;
+        }
+        .wrong-tag {
+            display: inline-block;
+            background: rgba(239, 68, 68, .16);
+            border: 1px solid rgba(239, 68, 68, .32);
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #fca5a5;
+            margin: 3px;
+        }
+        .result-box {
+            border-radius: 18px;
+            padding: 26px;
+            text-align: center;
+        }
+        .result-box.won {
+            background: linear-gradient(135deg, rgba(74, 222, 128, .16), rgba(16, 185, 129, .1));
+            border: 1px solid rgba(74, 222, 128, .45);
+        }
+        .result-box.lost {
+            background: rgba(239, 68, 68, .09);
+            border: 1px solid rgba(239, 68, 68, .38);
+        }
+        .result-box .emoji {
+            font-size: 52px;
+            margin-bottom: 8px;
+        }
+        .result-box .title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .result-box .title .highlight {
+            color: #4ade80;
+        }
+        .result-box .sub {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .48);
+            margin-bottom: 14px;
+        }
+        .result-box .pts {
+            font-size: 40px;
+            font-weight: 900;
+            color: #facc15;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(250, 204, 21, .45);
+        }
+        .result-box .lost-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fca5a5;
+            margin-bottom: 6px;
+        }
+        .result-box .lost-sub {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .38);
+            margin-bottom: 22px;
+        }
+        .btn-next {
+            background: linear-gradient(135deg, #f59e0b, #c87404);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 11px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, .35);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+        .input-row {
+            display: flex;
+            gap: 9px;
+        }
+        .input-row input {
+            flex: 1;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 11px;
+            padding: 13px 17px;
+            color: #fff;
+            font-size: 15px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .input-row input:focus {
+            outline: none;
+            border-color: rgba(250, 204, 21, .55);
+            box-shadow: 0 0 0 3px rgba(250, 204, 21, .12);
+        }
+        .btn-guess {
+            padding: 13px 22px;
+            border: none;
+            border-radius: 11px;
+            font-size: 14px;
+            font-weight: 800;
+            white-space: nowrap;
+            color: #fff;
+            background: rgba(255, 255, 255, .08);
+            transition: background .2s, box-shadow .2s;
+        }
+        .btn-guess.active {
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            box-shadow: 0 3px 12px rgba(99, 102, 241, .4);
+        }
+        .btn-row {
+            display: flex;
+            gap: 9px;
+        }
+        .btn-reveal {
+            background: rgba(255, 255, 255, .05);
+            color: rgba(255, 255, 255, .62);
+            border: 1px solid rgba(255, 255, 255, .11);
+            padding: 10px 16px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            flex: 1;
+        }
+        .btn-reveal strong {
+            color: #facc15;
+        }
+        .btn-text-hint {
+            background: rgba(250, 204, 21, .06);
+            color: rgba(250, 204, 21, .7);
+            border: 1px solid rgba(250, 204, 21, .15);
+            padding: 10px 16px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .btn-giveup {
+            background: rgba(239, 68, 68, .08);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, .22);
+            padding: 10px 16px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+        }
+        .gameover-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #fff;
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+            background: linear-gradient(158deg, #0d0921 0%, #1a0940 52%, #0c1e3c 100%);
+        }
+        .gameover-box {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(250, 204, 21, .22);
+            border-radius: 26px;
+            padding: 38px 28px;
+            text-align: center;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 0 60px rgba(250, 204, 21, .06);
+        }
+        .gameover-box .trophy {
+            font-size: 62px;
+            margin-bottom: 10px;
+        }
+        .gameover-box .title {
+            font-size: 25px;
+            font-weight: 900;
+            color: #facc15;
+            margin-bottom: 6px;
+            letter-spacing: .5px;
+        }
+        .gameover-box .sub {
+            font-size: 13px;
+            color: rgba(255, 255, 255, .4);
+            margin-bottom: 22px;
+        }
+        .gameover-box .score {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 2px;
+        }
+        .gameover-box .max-score {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .32);
+            margin-bottom: 16px;
+        }
+        .gameover-box .rating {
+            display: inline-block;
+            padding: 7px 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, .06);
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 10px;
+            letter-spacing: .5px;
+        }
+        .gameover-box .comment {
+            font-size: 14px;
+            color: rgba(255, 255, 255, .55);
+            margin-bottom: 26px;
+        }
+        .gameover-box .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 15px;
+            border-radius: 11px;
+            margin-bottom: 8px;
+        }
+        .gameover-box .history-item.won {
+            background: rgba(74, 222, 128, .07);
+            border: 1px solid rgba(74, 222, 128, .24);
+        }
+        .gameover-box .history-item.lost {
+            background: rgba(239, 68, 68, .07);
+            border: 1px solid rgba(239, 68, 68, .24);
+        }
+        .gameover-box .history-item .name {
+            font-size: 13px;
+        }
+        .gameover-box .history-item .pts {
+            font-weight: 800;
+            font-size: 14px;
+        }
+        .gameover-box .history-item .pts.won {
+            color: #4ade80;
+        }
+        .gameover-box .history-item .pts.lost {
+            color: #f87171;
+        }
+        .btn-restart {
+            background: linear-gradient(135deg, #f59e0b, #c87404);
+            color: #fff;
+            border: none;
+            padding: 15px 32px;
+            border-radius: 13px;
+            font-size: 16px;
+            font-weight: 800;
+            width: 100%;
+            box-shadow: 0 4px 18px rgba(245, 158, 11, .35);
+            letter-spacing: .5px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .blur-solutions {
+            filter: blur(0px);
+            transition: filter 0.3s ease;
+        }
+        .dev-tools-warning {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #facc15, #f59e0b);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: center;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script>
+        // ============================================================
+        // 🔒 ANTI-F12 / ANTI-INSPECT
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) ||
+                (e.ctrlKey && e.key === 'U' || e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        document.body.style.msUserSelect = 'none';
+
+        // ============================================================
+        // 🎯 POOL DI VIP - 12 personaggi (AGGIORNATO)
+        // ============================================================
+        const VIP_POOL = [{
+            vip: "Chiara Ferragni",
+            aliases: ["chiara ferragni", "ferragni", "chiara"],
+            category: "Influencer · Imprenditrice 🇮🇹",
+            gender: "👩 Donna",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Ho costruito un impero digitale partendo da un blog di moda personale aperto nel 2009.",
+                "Sono una donna italiana nata nel Nord Italia nel 1987.",
+                "Sono stata la prima fashion blogger a comparire sulla copertina di Vogue Paris.",
+                "Il mio brand di abbigliamento e il mio blog portano esattamente lo stesso nome.",
+                "Il mio ex marito è uno dei rapper e artisti italiani più famosi degli ultimi anni."
+            ],
+            textHint: "💡 Il suo cognome inizia con F ed è molto famosa su Instagram",
+            imageKey: 'chiara'
+        }, 
+        
+        {
+            vip: "Cristiano Ronaldo",
+            aliases: ["cristiano ronaldo", "ronaldo", "cr7", "cristiano", "cristiano ronaldo dos santos aveiro", "papà", "papa"],
+            category: "Calciatore ⚽ 🇵🇹",
+            gender: "👨 Uomo",
+            nation: "🇵🇹 Portogallo",
+            clues: [
+                "Sono un atleta professionista considerato tra i più forti di sempre nel mio sport.",
+                "Sono nato nel 1985 su un'isola portoghese nell'Oceano Atlantico.",
+                "Ho vinto il Pallone d'Oro per ben 5 volte nella mia carriera.",
+                "Ho indossato le maglie di Manchester United, Real Madrid e Juventus.",
+                "Il mio soprannome internazionale è composto dalle iniziali del mio nome e cognome, più il numero 7."
+            ],
+            textHint: "💡 ha vinto 5 Palloni d'Oro ",
+            imageKey: 'ronaldo'
+        },
+        
+        {
+            vip: "Raffaella Carrà",
+            aliases: ["raffaella carrà", "raffaella carra", "carrà", "carra", "raffaella"],
+            category: "Cantante · Showgirl 🇮🇹",
+            gender: "👩 Donna",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Sono stata una delle figure più iconiche e amate della televisione italiana del Novecento.",
+                "Ho iniziato la carriera come ballerina e attrice negli anni '60.",
+                "Sono diventata un'icona pop internazionale, adorata soprattutto in Spagna.",
+                "Una mia canzone degli anni '70 è oggi considerata un inno LGBTQ+ in tutto il mondo.",
+                "Sono famosa per i capelli corti color rame e per il ballo chiamato \"Tuca Tuca\"."
+            ],
+            textHint: "💡 È una delle più grandi showgirl italiane, famosa per i capelli rossi",
+            imageKey: 'raffaella'
+        },
+        
+        {
+            vip: "manuuxo",
+            aliases: ["manuuxo", "manuxo", "nocera", "manu", "ducera", "emanuele nocera", "emanuele"],
+            category: "YouTuber 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "",
+                "",
+                "",
+                "",
+                ""
+            ],
+            textHint: "💡 È il fondatore di Tesla e SpaceX, ha comprato Twitter",
+            imageKey: 'manu'
+        },
+        
+        {
+            vip: "Ludovica Pagani",
+            aliases: ["ludovica pagani", "pagani", "ludovica"],
+            category: "Influencer · DJ · Conduttrice 🇮🇹",
+            gender: "👩 Donna",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Sono nata nel 1995 a Bergamo e ho una laurea in Economia e Management.",
+                "Sono una giornalista sportiva, conduttrice TV e DJ professionista.",
+                "Sono una delle influencer italiane più seguite con oltre 4 milioni di follower su Instagram.",
+                "Ho un format di interviste su YouTube chiamato 'Casa Pagani'.",
+                "Sono famosa anche per la mia relazione con il calciatore Stephan El Shaarawy."
+            ],
+            textHint: "💡 È una giornalista sportiva e DJ, famosa anche per il suo fidanzato calciatore",
+            imageKey: 'ludovica'
+        },
+        
+        {
+            vip: "SINNAGGAGGHIRI",
+            aliases: ["sinna", "sinnaggagghiri", "denis", "denis tarantello", "tarantello"],
+            category: "YouTuber 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "",
+                "",
+                "",
+                "",
+                ""
+            ],
+            textHint: "💡 È un grande appassionato di fumetti e anime, famoso per la 'Nerd Cultura'",
+            imageKey: 'sinna'
+        },
+        
+        {
+            vip: "Kurolily",
+            aliases: ["kurolily", "sara stefanizzi", "sara", "kurolily sara"],
+            category: "Streamer · Gamer 🇮🇹",
+            gender: "👩 Donna",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Sono stata la prima streamer italiana a ottenere la partnership su Twitch nel 2014.",
+                "Ho quasi 298.542 follower su Twitch e 150.000 su YouTube.",
+                "Sono nata a Rimini nel 1986.",
+                "Sono una 'variety streamer' e gioco a diversi generi di videogiochi.",
+                "Sono stata Ambassador per Lucca Comics & Games nel 2022."
+            ],
+            textHint: "💡 È una delle streamer più famose d'Italia, conosciuta anche come 'Kurolily'",
+            imageKey: 'kurolily'
+        },
+        
+        {
+            vip: "Therealmarza",
+            aliases: ["Therealmarza", "maestro", "il maestro", "marza", "marzano", "il ninja di bari", "ninja di bari"],
+            category: "Streamer 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Ho iniziato la mia carriera nel 2009 .",
+                "Sono un Streamer e youtuber, nato al san nicola di Portimao nel 1996.",
+                "Una delle mie serie più famose è 'il fortnite +18'.",
+                "Ho vinto la kings league",
+                "Sono migliore di leclerc ma purtroppo ero povero", 
+            ],
+            textHint: "💡  ",
+            imageKey: 'marza'
+        },
+        
+        {
+            vip: "Lewis Hamilton",
+            aliases: ["lewis hamilton", "hamilton", "lewis"],
+            category: "Pilota F1 🏎️ 🇬🇧",
+            gender: "👨 Uomo",
+            nation: "🇬🇧 Gran Bretagna",
+            clues: [
+                "Ho corso per McLaren e Mercedes.",
+                "Sono il pilota con più vittorie (105) e pole position (104) nella F1.",
+                "Ho vinto 7 titoli mondiali.",
+                "Nel 2026 corro per la Ferrari.",
+                "Sono famoso anche per il mio attivismo sociale.",
+            ],
+            textHint: "💡 7 volte campione del mondo F1, recordman di vittorie",
+            imageKey: 'lewis'
+        },
+        
+        {
+            vip: "Andrea Kimi Antonelli",
+            aliases: ["andrea kimi antonelli", "antonelli", "kimi", "andrea"],
+            category: "Pilota F1 🏎️ 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Sono nato a Bologna nel 2006.",
+                "Sono un giovane pilota italiano di F1.",
+                "Nel 2026 corro per la Mercedes.",
+                "Sono considerato il futuro della F1 italiana.",
+                "Ho vinto titoli in Formula 4 e Formula 2."
+            ],
+            textHint: "💡 Giovane promessa italiana, pilota Mercedes",
+            imageKey: 'antonelli'
+        },
+        
+        {
+            vip: "Pesh",
+            aliases: ["pesh", "name pesh", "riccardo pescini", "peshone"],
+            category: "Streamer · YouTuber 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "Sono uno streamer e youtuber italiano.",
+                "Sono il capo Fondatore dell'Auschwitz Gang",
+                "Sono famoso per i miei contenuti su Cod e Gta",
+                "Conosco Balotelli ",
+                "Sono noto per il mio stile diretto e ironico.",
+            ],
+            textHint: "💡 Streamer italiano, conosciuto come PESH",
+            imageKey: 'pesh'
+        },
+        
+        {
+            vip: "Belen Rodriguez",
+            aliases: ["belen rodriguez", "belen", "rodriguez"],
+            category: "Showgirl · Conduttrice 🇦🇷",
+            gender: "👩 Donna",
+            nation: "🇦🇷 Argentina",
+            clues: [
+                "Sono una showgirl e conduttrice televisiva argentina.",
+                "Sono nata a Buenos Aires nel 1984.",
+                "Sono diventata famosa in Italia grazie alla televisione.",
+                "Ho condotto programmi di successo come 'Le Iene'.",
+                "Sono stata una delle sex symbol più celebri della TV italiana."
+            ],
+            textHint: "💡 Showgirl argentina, famosa in Italia come 'Belen'",
+            imageKey: 'belen'
+
+
+        },
+        
+        {
+            vip: "SINNAGGAGGHIRI",
+            aliases: ["sinna", "sinnaggagghiri", "denis", "denis tarantello", "tarantello"],
+            category: "YouTuber 🇮🇹",
+            gender: "👨 Uomo",
+            nation: "🇮🇹 Italia",
+            clues: [
+                "ho fatto il bagno con gue pequeno in una vasca di prosecco ",
+                "sono nato a vicenza nel 1996 ",
+                "mi sono licenziato dal lavoro da elettricista per fare lo youtuber",
+                "la mia dislessia fa ridere tutti i miei fan",
+                "la dominator è la mia moto preferita",
+            ],
+            textHint: "💡 È un grande appassionato di fumetti e anime, famoso per la 'Nerd Cultura'",
+            imageKey: 'sinna'
+        }
+        ];
+
+        // ============================================================
+        // IMMAGINI - DUE VERSIONI PER OGNI VIP
+        // ============================================================
+        const IMAGES = {
+            chiara: {
+                cropped: 'images/chiara.jpg',
+                full: 'images/chiara_intera.jpg'
+            },
+            ronaldo: {
+                cropped: 'images/ronaldo.jpg',
+                full: 'images/ronaldo_intera.jpg'
+            },
+            raffaella: {
+                cropped: 'images/raffaella.jpg',
+                full: 'images/raffaella_intera.jpg'
+            },
+            manu: {
+                cropped: 'images/manu.jpg',
+                full: 'images/manu_intera.jpg'
+            },
+            ludovica: {
+                cropped: 'images/ludovica.jpg',
+                full: 'images/ludovica_intera.jpg'
+            },
+            sinna: {
+                cropped: 'images/sinna.jpg',
+                full: 'images/sinna_intera.jpg'
+            },
+            kurolily: {
+                cropped: 'images/kurolily.jpg',
+                full: 'images/kurolily_intera.jpg'
+            },
+            marza: {
+                cropped: 'images/marza.jpg',
+                full: 'images/marza_intera.jpg'
+            },
+            lewis: {
+                cropped: 'images/lewis.jpg',
+                full: 'images/lewis_intera.jpg'
+            },
+            antonelli: {
+                cropped: 'images/antonelli.jpg',
+                full: 'images/antonelli_intera.jpg'
+            },
+            pesh: {
+                cropped: 'images/pesh.jpg',
+                full: 'images/pesh_intera.jpg'
+            },
+            belen: {
+                cropped: 'images/belen.jpg',
+                full: 'images/belen_intera.jpg'
+            }
+        };
+
+        // ============================================================
+        // FUNZIONE PER PESCARE 10 VIP CASUALI SENZA RIPETIZIONI
+        // ============================================================
+        function getRandomVips(pool, count) {
+            const shuffled = [...pool];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, count);
+        }
+
+        // ============================================================
+        // PUNTEGGI
+        // ============================================================
+        const POINTS = [500, 400, 300, 200, 100];
+        const norm = (s) => s.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // ============================================================
+        // REACT APP
+        // ============================================================
+        const { useState, useEffect, useRef } = React;
+
+        function GameOver({ history, totalScore, onRestart, totalRounds }) {
+            const max = totalRounds * 500;
+            const pct = totalScore / max;
+            const won = history.filter((h) => h.won).length;
+            let rating, color, comment;
+            if (pct >= 0.8) {
+                rating = "🥇 ESPERTO VIP!";
+                color = "#facc15";
+                comment = "Fenomenale! Sei un'enciclopedia dei personaggi famosi!";
+            } else if (pct >= 0.6) {
+                rating = "🥈 QUASI ESPERTO";
+                color = "#c0c0c0";
+                comment = "Ottimo lavoro! Ne sai davvero tante!";
+            } else if (pct >= 0.3) {
+                rating = "🥉 NEL MEZZO";
+                color = "#cd7f32";
+                comment = "Risultato nella media. Allenati e torna più forte!";
+            } else {
+                rating = "📺 SEGUI PIÙ TV!";
+                color = "#ef4444";
+                comment = "Poco sui VIP? Segui più notizie e sfida di nuovo!";
+            }
+
+            return React.createElement("div", { className: "gameover-container" },
+                React.createElement("div", { className: "gameover-box" },
+                    React.createElement("div", { className: "trophy" }, "🏆"),
+                    React.createElement("div", { className: "title" }, "Quiz Completato!"),
+                    React.createElement("div", { className: "sub" }, won, " su ", totalRounds, " personaggi indovinati"),
+                    React.createElement("div", { className: "score" }, totalScore),
+                    React.createElement("div", { className: "max-score" }, "punti su ", max, " possibili"),
+                    React.createElement("div", { className: "rating", style: { border: `1px solid ${color}50`, color } },
+                        rating),
+                    React.createElement("div", { className: "comment" }, comment),
+                    React.createElement("div", { style: { maxHeight: "200px", overflowY: "auto", marginBottom: "16px" } },
+                        history.map((h, i) =>
+                            React.createElement("div", { key: i, className: `history-item ${h.won ? 'won' : 'lost'}` },
+                                React.createElement("span", { className: "name" }, h.won ? "✅" : "❌", " ", React.createElement(
+                                    "strong", null, h.vip)),
+                                React.createElement("span", { className: `pts ${h.won ? 'won' : 'lost'}` }, h.won ?
+                                    `+${h.pts}` : "0", " pt")
+                            )
+                        )
+                    ),
+                    React.createElement("button", { className: "btn-restart", onClick: onRestart }, "🔄 Gioca ancora")
+                )
+            );
+        }
+
+        function VIPQuiz() {
+            // Genera 10 VIP casuali all'avvio
+            const [roundVips, setRoundVips] = useState(() => getRandomVips(VIP_POOL, 10));
+            const [roundIdx, setRoundIdx] = useState(0);
+            const [clues, setClues] = useState(0);
+            const [input, setInput] = useState("");
+            const [wrong, setWrong] = useState([]);
+            const [status, setStatus] = useState(null);
+            const [score, setScore] = useState(0);
+            const [lastPts, setLastPts] = useState(0);
+            const [history, setHistory] = useState([]);
+            const [over, setOver] = useState(false);
+            const [showTextHint, setShowTextHint] = useState(false);
+            const inputRef = useRef(null);
+
+            const round = roundVips[roundIdx];
+            const totalRounds = roundVips.length;
+            const pts = clues === 0 ? 500 : POINTS[clues - 1];
+            const nextPts = clues === 0 ? 400 : POINTS[Math.min(clues, 4)];
+            const images = round ? IMAGES[round.imageKey] : null;
+            const progress = ((roundIdx) / totalRounds) * 100;
+
+            useEffect(() => {
+                if (!status && !over && round) {
+                    const t = setTimeout(() => inputRef.current?.focus(), 120);
+                    return () => clearTimeout(t);
+                }
+            }, [roundIdx, status, over, round]);
+
+            const doGuess = () => {
+                const g = input.trim();
+                if (!g || status || !round) return;
+                const ok = round.aliases.some((a) => norm(a) === norm(g));
+                if (ok) {
+                    setScore((s) => s + pts);
+                    setLastPts(pts);
+                    setStatus("won");
+                    setHistory((h) => [...h, { vip: round.vip, pts, won: true }]);
+                } else {
+                    setWrong((w) => [...w, g]);
+                    if (clues < 5) {
+                        setClues((c) => c + 1);
+                    }
+                    if (clues >= 5) {
+                        setStatus("lost");
+                        setHistory((h) => [...h, { vip: round.vip, pts: 0, won: false }]);
+                    }
+                }
+                setInput("");
+                setShowTextHint(false);
+            };
+
+            const doReveal = () => {
+                if (clues < 5 && !status && round) {
+                    setClues((c) => c + 1);
+                }
+            };
+
+            const toggleTextHint = () => {
+                if (!status) {
+                    setShowTextHint(!showTextHint);
+                }
+            };
+
+            const doGiveUp = () => {
+                if (!status && round) {
+                    setStatus("lost");
+                    setHistory((h) => [...h, { vip: round.vip, pts: 0, won: false }]);
+                }
+            };
+
+            const doNext = () => {
+                if (roundIdx + 1 >= roundVips.length) {
+                    setOver(true);
+                } else {
+                    setRoundIdx((i) => i + 1);
+                    setClues(0);
+                    setInput("");
+                    setWrong([]);
+                    setStatus(null);
+                    setLastPts(0);
+                    setShowTextHint(false);
+                }
+            };
+
+            const doRestart = () => {
+                const newVips = getRandomVips(VIP_POOL, 10);
+                setRoundVips(newVips);
+                setRoundIdx(0);
+                setClues(0);
+                setInput("");
+                setWrong([]);
+                setStatus(null);
+                setLastPts(0);
+                setScore(0);
+                setHistory([]);
+                setOver(false);
+                setShowTextHint(false);
+            };
+
+            if (over || !round) {
+                return React.createElement(GameOver, {
+                    history,
+                    totalScore: score,
+                    onRestart: doRestart,
+                    totalRounds: totalRounds
+                });
+            }
+
+            const cBorder = status === "won" ? "won" : status === "lost" ? "lost" : "";
+
+            return React.createElement("div", { className: "no-select", style: { minHeight: "100vh", background: "linear-gradient(158deg,#0d0921 0%,#1a0940 52%,#0c1e3c 100%)", color: "#fff", fontFamily: "'Segoe UI','Inter',system-ui,sans-serif", display: "flex", flexDirection: "column" } },
+                // HEADER
+                React.createElement("header", { className: "header" },
+                    React.createElement("div", null,
+                        React.createElement("div", { className: "header-title" }, "🎯 VIP QUIZ"),
+                        React.createElement("div", { className: "header-sub" }, "INDOVINA IL PERSONAGGIO FAMOSO")
+                    ),
+                    React.createElement("div", { className: "header-right" },
+                        React.createElement("div", { style: { display: "flex", gap: "5px" } },
+                            roundVips.map((_, i) =>
+                                React.createElement("div", {
+                                    key: i,
+                                    className: `dot ${i < roundIdx ? 'done' : i === roundIdx ? 'active' : 'empty'}`
+                                })
+                            )
+                        ),
+                        React.createElement("div", { className: "score-badge" }, "⭐ ", score)
+                    )
+                ),
+                // BODY
+                React.createElement("div", { className: "container" },
+                    // Progress bar
+                    React.createElement("div", null,
+                        React.createElement("div", { className: "progress-bar" },
+                            React.createElement("div", { className: "progress-fill", style: { width: `${progress}%` } })
+                        ),
+                        React.createElement("div", { className: "progress-text" }, roundIdx, " / ", totalRounds,
+                            " completati")
+                    ),
+                    // Round info
+                    React.createElement("div", { className: "round-info" },
+                        React.createElement("div", { className: "round-label" }, "ROUND ", roundIdx + 1, " / ", totalRounds),
+                        !status && React.createElement("div", { className: "pts-badge" },
+                            React.createElement("span", null, "⭐"),
+                            React.createElement("span", null, "Indovina ora per ", React.createElement("strong", null, pts, " pt"))
+                        )
+                    ),
+                    // CLUE CARD
+                    React.createElement("div", { className: `clue-card ${cBorder}` },
+                        // Pips
+                        clues > 0 && React.createElement("div", { className: "clue-header" },
+                            React.createElement("span", null, "💡 Indizi rivelati"),
+                            React.createElement("div", { className: "pips" },
+                                [0, 1, 2, 3, 4].map((i) =>
+                                    React.createElement("div", {
+                                        key: i,
+                                        className: `pip ${i < clues ? 'active' : 'empty'}`
+                                    })
+                                )
+                            )
+                        ),
+                        // Clues
+                        clues > 0 && React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "9px" } },
+                            round.clues.slice(0, clues).map((clue, i) => {
+                                const isNew = i === clues - 1;
+                                return React.createElement("div", {
+                                        key: `${roundIdx}-${i}`,
+                                        className: `clue-item ${isNew && !status ? 'new' : ''} ${isNew && !status ? 'ci' : ''}`
+                                    },
+                                    React.createElement("span", { className: "num" }, "#", i + 1),
+                                    React.createElement("span", { className: "text" }, clue)
+                                );
+                            })
+                        ),
+                        // Messaggio iniziale
+                        clues === 0 && !status && React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,.4)", fontSize: "14px" } },
+                            "👀 Osserva l'immagine e indovina chi è!"
+                        ),
+                        // IMMAGINE TAGLIATA (durante il gioco)
+                        !status && images && React.createElement("div", { className: "image-container" },
+                            React.createElement("div", { className: "image-label" }, round.gender, " · ", round.nation),
+                            React.createElement("img", {
+                                src: images.cropped,
+                                alt: `Indizio visivo per ${round.vip}`,
+                                style: {
+                                    width: "80%",
+                                    maxHeight: "280px",
+                                    objectFit: "contain",
+                                    borderRadius: "16px",
+                                    border: "2px solid rgba(250, 204, 21, .15)",
+                                    boxShadow: "0 0 40px rgba(250, 204, 21, .08)",
+                                    backgroundColor: "rgba(0, 0, 0, .2)",
+                                    transition: "all .5s cubic-bezier(.34, 1.56, .64, 1)"
+                                },
+                                loading: "lazy",
+                                onError: (e) => {
+                                    e.target.src = images.full;
+                                    console.log('Immagine cropped non trovata, uso full per:', round.vip);
+                                }
+                            })
+                        ),
+                        // IMMAGINE INTERA (quando vince)
+                        status === "won" && images && React.createElement("div", { className: "image-container" },
+                            React.createElement("div", { className: "image-label won-label" }, "✅ ", round.gender, " · ", round.nation),
+                            React.createElement("img", {
+                                src: images.full,
+                                alt: `Immagine completa di ${round.vip}`,
+                                className: "hint-image full",
+                                loading: "lazy",
+                                onError: (e) => {
+                                    e.target.style.display = 'none';
+                                }
+                            })
+                        ),
+                        // TEXT HINT
+                        !status && showTextHint && round.textHint && React.createElement("div", { className: "text-hint-container fade-in" },
+                            React.createElement("span", null, round.textHint)
+                        )
+                    ),
+                    // Wrong guesses
+                    wrong.length > 0 && !status && React.createElement("div", { className: "wrong-container" },
+                        React.createElement("div", { className: "label" }, "❌ Tentativi sbagliati:"),
+                        React.createElement("div", null,
+                            wrong.map((g, i) =>
+                                React.createElement("span", { key: i, className: "wrong-tag bi" }, g)
+                            )
+                        )
+                    ),
+                    // WON
+                    status === "won" && React.createElement("div", { className: "result-box won pop" },
+                        React.createElement("div", { className: "emoji" }, "🎉"),
+                        React.createElement("div", { className: "title" }, "Esatto! È ", React.createElement("span", { className: "highlight" }, round.vip), "!"),
+                        React.createElement("div", { className: "sub" }, round.category),
+                        React.createElement("div", { className: "pts" }, "+", lastPts, " pt"),
+                        React.createElement("button", { className: "btn-next", onClick: doNext },
+                            roundIdx + 1 < totalRounds ? `Round ${roundIdx + 2} →` : "🏆 Vedi risultati"
+                        )
+                    ),
+                    // LOST
+                    status === "lost" && React.createElement("div", { className: "result-box lost" },
+                        React.createElement("div", { className: "emoji" }, "😔"),
+                        React.createElement("div", { className: "sub", style: { fontSize: "13px", color: "rgba(255,255,255,.48)", marginBottom: "5px" } }, "Era..."),
+                        React.createElement("div", { className: "lost-name" }, round.vip),
+                        React.createElement("div", { className: "lost-sub" }, round.category),
+                        React.createElement("button", { className: "btn-next", onClick: doNext },
+                            roundIdx + 1 < totalRounds ? `Round ${roundIdx + 2} →` : "🏆 Vedi risultati"
+                        )
+                    ),
+                    // INPUT
+                    !status && React.createElement("div", { className: "input-group" },
+                        React.createElement("div", { className: "input-row" },
+                            React.createElement("input", {
+                                ref: inputRef,
+                                type: "text",
+                                value: input,
+                                onChange: (e) => setInput(e.target.value),
+                                onKeyDown: (e) => e.key === "Enter" && doGuess(),
+                                placeholder: "Scrivi il nome del VIP…",
+                                maxLength: 60
+                            }),
+                            React.createElement("button", {
+                                className: `btn-guess ${input.trim() ? 'active' : ''}`,
+                                onClick: doGuess,
+                                disabled: !input.trim()
+                            }, "✓ Indovina")
+                        ),
+                        React.createElement("div", { className: "btn-row" },
+                            React.createElement("button", { className: "btn-reveal", onClick: doReveal },
+                                "💡 Prossimo indizio — poi max ", React.createElement("strong", null, nextPts, " pt")
+                            ),
+                            round.textHint && React.createElement("button", { className: "btn-text-hint", onClick: toggleTextHint },
+                                showTextHint ? "🙈 Nascondi aiuto" : "🤔 Aiuto testuale"
+                            )
+                        ),
+                        clues >= 5 && React.createElement("button", { className: "btn-giveup", onClick: doGiveUp },
+                            "😞 Mi arrendo (0 pt)"
+                        )
+                    )
+                ),
+                // Dev tools warning
+                React.createElement("div", { className: "dev-tools-warning" }, "🔒 F12 disabilitato")
+            );
+        }
+
+        // ============================================================
+        // RENDER
+        // ============================================================
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(VIPQuiz));
+    </script>
+
+</body>
+</html>
