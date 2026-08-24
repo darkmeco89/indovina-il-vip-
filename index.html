@@ -635,6 +635,33 @@
             text-align: center;
             margin-top: 4px;
         }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script>
+        // ============================================================
+        // 🔒 ANTI-F12 / ANTI-INSPECT
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) ||
+                (e.ctrlKey && e.key === 'U' || e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        document.body.style.msUserSelect = 'none';
 
         // ============================================================
         // 🎯 POOL DI VIP - 12 personaggi (AGGIORNATO)
